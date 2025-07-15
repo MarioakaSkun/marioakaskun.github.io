@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kody kreskowe użytkowników</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 320px;
+            margin: 4px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            padding: 6px 2px 10px 2px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 1em;
+            margin-bottom: 8px;
+        }
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .user-btn {
+            padding: 7px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 6px;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .user-btn:hover, .user-btn:focus {
+            background: #0056b3;
+        }
+        /* Modal powiększenia kodu */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100vw; height: 100vh;
+            background: #fff;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-barcode {
+            width: 100vw;
+            height: 100vh;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+        .modal-barcode svg {
+            width: 90vw !important;
+            height: 32vh !important;
+            max-width: 600px;
+            max-height: 240px;
+            display: block;
+        }
+        .barcode-label {
+            font-size: 1em;
+            color: #333;
+            margin-bottom: 6px;
+            text-align: center;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        /* Ekran startowy z komunikatem */
+        .rotate-screen {
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100vw; height: 100vh;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .rotate-icon {
+            width: 44px;
+            height: 44px;
+            margin-bottom: 10px;
+            animation: rotatePhone 2s infinite linear;
+        }
+        @keyframes rotatePhone {
+            0% { transform: rotate(0deg);}
+            20% { transform: rotate(0deg);}
+            40% { transform: rotate(90deg);}
+            60% { transform: rotate(90deg);}
+            80% { transform: rotate(0deg);}
+            100% { transform: rotate(0deg);}
+        }
+        .rotate-text {
+            font-size: 0.95em;
+            color: #222;
+            margin-bottom: 4px;
+        }
+        .rotate-small {
+            font-size: 0.85em;
+            color: #666;
+        }
+        @media (max-width: 350px) {
+            .container {
+                max-width: 99vw;
+                padding: 2px 1px 6px 1px;
+            }
+            .user-btn {
+                font-size: 0.9em;
+                padding: 5px;
+            }
+            h1 {
+                font-size: 0.95em;
+            }
+        }
+        @media (orientation: landscape) {
+            .rotate-screen {
+                display: none !important;
+            }
+			.mario-anim {
+    margin-top: 18px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+	}
+        }
+    </style>
+</head>
+<body>
+    <!-- Ekran startowy z komunikatem o obrocie -->
+    <div class="rotate-screen" id="rotateScreen">
+	<div class="mario-anim">
+  <img src="https://mariokody.prv.pl/bobek.gif" alt="Mario" width="250" height="250">
+</div>
+        <svg class="rotate-icon" viewBox="0 0 64 64">
+            <rect x="16" y="8" width="32" height="48" rx="6" fill="#007bff" stroke="#222" stroke-width="2"/>
+            <rect x="28" y="12" width="8" height="4" rx="2" fill="#fff"/>
+            <polygon points="54,32 60,38 54,44" fill="#007bff"/>
+            <path d="M60,38 A26,26 0 1,1 32,6" fill="none" stroke="#007bff" stroke-width="3"/>
+        </svg>
+        <div class="rotate-text"><b>Obróć telefon poziomo</b></div>
+        <div class="rotate-small">Aby kontynuować, ustaw telefon w trybie poziomym.<br>Włącz autoobrót w telefonie.</div>
+    </div>
+	
+   <div class="container" id="mainContent" style="display:none;">
+        <h1>Wybierz użytkownika</h1>
+        <div class="user-list">
+            <!-- Podmień nazwy i kody poniżej -->
+            <button class="user-btn" data-name="Baska" data-code="12345678901234">Baśka</button>
+            <button class="user-btn" data-name="Przemo" data-code="2010100011064">Przemo</button>
+            <button class="user-btn" data-name="Dobi" data-code="201010007470">Dobies</button>
+            <button class="user-btn" data-name="Grzechu" data-code="45678901234567">Grzechu</button>
+            <button class="user-btn" data-name="Dyzio" data-code="56789012345678">Dyzio</button>
+        </div>
+    </div>
+
+    <!-- Modal do powiększenia kodu -->
+    <div class="modal" id="barcodeModal" tabindex="-1">
+        <div class="modal-barcode">
+            <div class="barcode-label" id="modalBarcodeLabel"></div>
+            <svg id="modalBarcode"></svg>
+        </div>
+    </div>
+
+    <script>
+        // Funkcja do pokazywania/ukrywania komunikatu w zależności od orientacji
+        function checkOrientation() {
+            if (window.matchMedia("(orientation: landscape)").matches) {
+                document.getElementById('rotateScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            } else {
+                document.getElementById('rotateScreen').style.display = 'flex';
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        }
+        window.addEventListener('orientationchange', checkOrientation);
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('DOMContentLoaded', checkOrientation);
+
+        // Kod kreskowy
+        const userButtons = document.querySelectorAll('.user-btn');
+        const barcodeModal = document.getElementById('barcodeModal');
+        const modalBarcode = document.getElementById('modalBarcode');
+        const modalBarcodeLabel = document.getElementById('modalBarcodeLabel');
+
+        let currentCode = '';
+        let currentName = '';
+
+        userButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentName = btn.getAttribute('data-name');
+                currentCode = btn.getAttribute('data-code');
+                barcodeModal.classList.add('active');
+                modalBarcodeLabel.textContent = currentName;
+                // Usuwamy poprzedni kod SVG (ważne!)
+                modalBarcode.innerHTML = '';
+                // Generuj szeroki, ale mniejszy kod kreskowy, bez cyfr pod spodem
+                JsBarcode(modalBarcode, currentCode, {
+                    format: "CODE128",
+                    width: 8, // szerokość kreski (zmniejszona)
+                    height: 220, // mniejsza wysokość
+                    displayValue: false, // nie pokazuj cyfr pod kodem
+                    margin: 0
+                });
+            });
+        });
+
+        // Zamknij modal po kliknięciu poza kodem
+        barcodeModal.addEventListener('click', (e) => {
+            barcodeModal.classList.remove('active');
+        });
+        // Zatrzymaj propagację kliknięcia na kodzie kreskowym, żeby nie zamykało modala
+        modalBarcode.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        // Zatrzymaj propagację kliknięcia na labelu, żeby nie zamykało modala
+        modalBarcodeLabel.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Zamknij modal po naciśnięciu ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") {
+                barcodeModal.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>
